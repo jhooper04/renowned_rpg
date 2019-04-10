@@ -2,6 +2,13 @@
 renowned_rpg.settings = {}
 
 renowned_rpg.settings.hunger = {
+  base_rate = 480,
+  move_step = 6,
+  dig_step = 8,
+  place_step = 2,
+}
+
+renowned_rpg.settings.thirst = {
   base_rate = 240,
   move_step = 6,
   dig_step = 8,
@@ -49,7 +56,7 @@ renowned_rpg.settings.stat_defaults={
   attk=0, def=0, hlth=20, stam=5, spd=0
 }
 renowned_rpg.settings.stamina_defaults={
-  sprint=5, breath=0, hunger=15
+  sprint=5, thirst=5, breath=0, hunger=15
 }
 
 renowned_rpg.settings.max_level = 200

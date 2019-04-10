@@ -17,7 +17,8 @@ local minetest_get_timeofday = minetest.get_timeofday
 --     dead = {},
 --     damaged = {},
 --     suffocate = {},
---     exaustion = {}
+--     exaustion = {},
+--     hydration = {},
 -- }
 
 renowned_rpg.prev_hps = {}
@@ -25,6 +26,7 @@ renowned_rpg.player_dead = {}
 renowned_rpg.player_damaged = {}
 renowned_rpg.player_suffocate = {}
 renowned_rpg.player_exaustion = {}
+renowned_rpg.player_hydration = {}
 
 
 minetest.register_on_newplayer(function(player)
@@ -34,6 +36,8 @@ minetest.register_on_newplayer(function(player)
     renowned_rpg:set_hp(player, stats.hlth)
     renowned_rpg:set_breath(player, stats.breath)
     renowned_rpg:set_hunger(player, stats.hunger)
+    renowned_rpg:set_sprint(player, stats.sprint)
+    renowned_rpg:set_thirst(player, stats.thirst)
 end)
 
 minetest.register_on_joinplayer(function(player)
@@ -43,12 +47,16 @@ minetest.register_on_joinplayer(function(player)
     renowned_rpg.player_dead[name] = false
     renowned_rpg.player_damaged[name] = false
     renowned_rpg.player_exaustion[name] = 0
+    renowned_rpg.player_hydration[name] = 0
 
     -- make sure the global tick hides/shows breath bar properly on join
     renowned_rpg.player_suffocate[name] = true
 
+    --renowned_rpg:update_total_stats(player)
+
 --debug
 --renowned_rpg:set_hunger(player, 5)
+renowned_rpg:set_thirst(player, stats.thirst/2)
 
     renowned_rpg:init_player_hud(player)
 end)
@@ -58,10 +66,16 @@ minetest.register_on_respawnplayer(function(player)
     local stats = renowned_rpg:get_total_stats(player)
     renowned_rpg:set_hp(player, stats.hlth)
     player:set_hp(20)
+    renowned_rpg:set_breath(player, stats.breath)
+    renowned_rpg:set_hunger(player, stats.hunger)
+    renowned_rpg:set_sprint(player, stats.sprint)
+    renowned_rpg:set_thirst(player, stats.thirst)
+
     renowned_rpg.player_dead[name] = false
     renowned_rpg.player_damaged[name] = false
     renowned_rpg.player_suffocate[name] = false
     renowned_rpg.player_exaustion[name] = 0
+    renowned_rpg.player_hydration[name] = 0
 
     renowned_rpg:update_all_huds(player)
 end)
@@ -231,6 +245,10 @@ local hunger_base_rate = renowned_rpg.settings.hunger.base_rate
 local hunger_move_step = renowned_rpg.settings.hunger.move_step
 local hunger_dig_step = renowned_rpg.settings.hunger.dig_step
 local hunger_place_step = renowned_rpg.settings.hunger.place_step
+local thirst_base_rate = renowned_rpg.settings.thirst.base_rate
+local thirst_move_step = renowned_rpg.settings.thirst.move_step
+local thirst_dig_step = renowned_rpg.settings.thirst.dig_step
+local thirst_place_step = renowned_rpg.settings.thirst.place_step
 
 minetest.register_globalstep(function(dtime)
 
@@ -269,6 +287,7 @@ minetest.register_globalstep(function(dtime)
             local player_name = player:get_player_name()
             local suffocating = false
             local hunger = renowned_rpg:get_hunger(player)
+            local thirst = renowned_rpg:get_thirst(player)
 
             if breath < 11 then
                 player:set_breath(10)
@@ -297,13 +316,15 @@ minetest.register_globalstep(function(dtime)
 
             local hunger_change = 0
             local exaustion = renowned_rpg.player_exaustion[player_name] + math_floor(dtime*100)
+            local hydration = renowned_rpg.player_hydration[player_name] + math_floor(dtime*100)
             local keys = player:get_player_control()
 
             
 
             if keys.up or keys.down or keys.left or keys.right then
                 --jump, right, left, LMB, RMB, sneak, aux1, down, up
-                exaustion =  exaustion + hunger_move_step
+                exaustion = exaustion + hunger_move_step
+                hydration = hydration + thirst_move_step
                 print("buttons pressed by " .. player_name .. ": " .. tostring(exaustion))
             end
 
@@ -319,25 +340,24 @@ minetest.register_globalstep(function(dtime)
                 print(player_name .. "is exausted: 1")
             end
             renowned_rpg.player_exaustion[player_name] = exaustion
-            print("exaustion: " .. tostring(exaustion))
+
+            if hydration > thirst_base_rate then
+                thirst = math_max(thirst-1, 0)
+                renowned_rpg:set_thirst(player, thirst)
+                renowned_rpg:update_thirst_hud(player)
+                hydration = 0
+                print(player_name .. "is thirstified: 1")
+            end
+            renowned_rpg.player_hydration[player_name] = hydration
 
             if hunger <= 0 then 
                 player:set_hp(player:get_hp()-5)
             end
+            if thirst <= 0 then 
+                player:set_hp(player:get_hp()-5)
+            end
         end -- for n, player in ipairs(players)
 
-        -- print("hunger time: "..tostring(hunger_timer))
-        -- if hunger_timer > hunger_base_rate then
-        --     for n, player in ipairs(players) do
-        --         local hunger = math_max(renowned_rpg:get_hunger(player)-1, 0)
-        --         local hp = renowned_rpg:get_hp(player)
-
-        --         renowned_rpg:set_hunger(player, hunger)
-        --         renowned_rpg:update_hunger_hud(player)
-        --     end
-        --     print("---Hunger Timer!---")
-        --     hunger_timer = 0
-        -- end
         timer = 0
     end -- timer > 2
 end)
@@ -347,16 +367,28 @@ minetest.register_on_placenode(function(pos, newnode, player, oldnode, itemstack
 		return
     end
     local player_name = player:get_player_name()
+
     local exaustion = renowned_rpg.player_exaustion[player_name]
     exaustion = exaustion + hunger_place_step
     renowned_rpg.player_exaustion[player_name] = exaustion
+
+    local hydration = renowned_rpg.player_hydration[player_name]
+    hydration = hydration + thirst_place_step
+    renowned_rpg.player_hydration[player_name] = hydration
+
     renowned_rpg:inc_nodes_placed(player)
 end)
 minetest.register_on_dignode(function(pos, oldnode, player)
     local player_name = player:get_player_name()
+    
     local exaustion = renowned_rpg.player_exaustion[player_name]
     exaustion = exaustion + hunger_dig_step
     renowned_rpg.player_exaustion[player_name] = exaustion
+
+    local hydration = renowned_rpg.player_hydration[player_name]
+    hydration = hydration + thirst_dig_step
+    renowned_rpg.player_hydration[player_name] = hydration
+
     renowned_rpg:inc_nodes_dug(player)
 end)
 
@@ -486,29 +518,4 @@ end
 
 
 
-minetest.register_craftitem("renowned_rpg:health_potion", {
-	description = "Health Potion",
-	inventory_image = "renowned_rpg_health_potion.png",
-	on_use = function(itemstack, player, pointed_thing)
-  
-        local stats = renowned_rpg:get_total_stats(player)
-    
-        if renowned_rpg:get_hp(player) >= stats.hlth then
-            return itemstack
-        else
-            renowned_rpg:set_hp(player, stats.hlth)
-            renowned_rpg:update_health_hud(player)
-            itemstack:take_item()
-            return itemstack
-        end
-	end
-})
 
-minetest.register_craft({
-	output = "renowned_rpg:health_potion",
-	recipe = {
-		{"", "flowers:rose", ""},
-		{"", "default:gold_ingot", ""},
-		{"", "vessels:glass_bottle", ""},
-	}
-})

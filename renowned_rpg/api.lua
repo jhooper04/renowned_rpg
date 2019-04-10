@@ -68,6 +68,20 @@ local function data_set_hunger(player, value)
     data_set_number(player, "custom_hunger", value)
 end
 
+local function data_get_sprint(player)
+    return data_get_number(player, "custom_sprint", 10)
+end
+local function data_set_sprint(player, value)
+    data_set_number(player, "custom_sprint", value)
+end
+
+local function data_get_thirst(player)
+    return data_get_number(player, "custom_thirst", 10)
+end
+local function data_set_thirst(player, value)
+    data_set_number(player, "custom_thirst", value)
+end
+
 local function data_get_total_xp(player)
     return data_get_number(player, "total_xp", 0)
 end
@@ -111,7 +125,7 @@ local function data_set_pending_stats(player, value)
 end
 
 local function data_get_total_stats(player)
-    return data_get_table(player, "total_stats", {attk=0, def=0, hlth=20, stam=5, spd=0, breath=5, sprint=10, hunger=20})
+    return data_get_table(player, "total_stats", {attk=0, def=0, hlth=20, stam=5, spd=0, breath=5, sprint=10, thirst=10, hunger=20})
 end
 local function data_set_total_stats(player, value)
     data_set_table(player, "total_stats", value)
@@ -250,6 +264,7 @@ local function logic_update_total_stats(player)
         spd=defaults.spd+( applied.spd*multipliers.spd ),
     }
     totals.sprint = stamina_defaults.sprint+totals.stam
+    totals.thirst = stamina_defaults.thirst+totals.stam
     totals.breath = stamina_defaults.breath+totals.stam
     totals.hunger = stamina_defaults.hunger+totals.stam
     data_set_total_stats(player, totals)
@@ -282,6 +297,20 @@ function renowned_rpg.get_hunger(self, player)
 end
 function renowned_rpg.set_hunger(self, player, value)
     data_set_hunger(player, value)
+end
+
+function renowned_rpg.get_sprint(self, player)
+    return data_get_sprint(player)
+end
+function renowned_rpg.set_sprint(self, player, value)
+    data_set_sprint(player, value)
+end
+
+function renowned_rpg.get_thirst(self, player)
+    return data_get_thirst(player)
+end
+function renowned_rpg.set_thirst(self, player, value)
+    data_set_thirst(player, value)
 end
 
 function renowned_rpg.add_xp(self, player, amount)
@@ -324,6 +353,10 @@ end
 
 function renowned_rpg.get_total_stats(self, player)
     return data_get_total_stats(player)
+end
+function renowned_rpg.update_total_stats(self, player)
+    logic_update_total_stats(player)
+    --renowned_rpg:update_all_huds(player)
 end
 
 function renowned_rpg.plus_pending_stat(self, player, statname)
@@ -425,6 +458,37 @@ function renowned_rpg.get_health_bar_state(self, player)
     return ret
 end
 
+-- function renowned_rpg.get_attack_bar_state(self, player)
+--     local ret = {}
+--     local stats = renowned_rpg:get_total_stats(player)
+    
+--     local attk = stats.attk
+--     local bonus = 0
+
+--     ret.text = string.format("ATTK: %d", attk)
+--     if bonus > 0 then
+--         ret.text = ret.text .. "+" .. tostring(bonus)
+--     end
+--     ret.value = 1
+    
+--     return ret
+-- end
+function renowned_rpg.get_defense_bar_state(self, player)
+    local ret = {}
+    local stats = renowned_rpg:get_total_stats(player)
+    
+    local def = stats.def
+    local bonus = 0
+
+    ret.text = string.format("DEF: %d", def)
+    if bonus > 0 then
+        ret.text = ret.text .. "+" .. tostring(bonus)
+    end
+    ret.value = 1
+    
+    return ret
+end
+
 function renowned_rpg.get_breath_bar_state(self, player)
     local ret = {}
     local stats = renowned_rpg:get_total_stats(player)
@@ -450,6 +514,36 @@ function renowned_rpg.get_hunger_bar_state(self, player)
     ret = {
         text = string.format("Hunger: %d/%d", hunger, hunger_max),
         value = hunger / hunger_max,
+    }
+    
+    return ret
+end
+
+function renowned_rpg.get_sprint_bar_state(self, player)
+    local ret = {}
+    local stats = renowned_rpg:get_total_stats(player)
+    
+    local sprint = renowned_rpg:get_sprint(player)
+    local sprint_max = stats.sprint
+
+    ret = {
+        text = string.format("Sprint: %d/%d", sprint, sprint_max),
+        value = sprint / sprint_max,
+    }
+    
+    return ret
+end
+
+function renowned_rpg.get_thirst_bar_state(self, player)
+    local ret = {}
+    local stats = renowned_rpg:get_total_stats(player)
+    
+    local thirst = renowned_rpg:get_thirst(player)
+    local thirst_max = stats.thirst
+
+    ret = {
+        text = string.format("Thirst: %d/%d", thirst, thirst_max),
+        value = thirst / thirst_max,
     }
     
     return ret
