@@ -231,14 +231,18 @@ beds.on_rightclick = beds_on_rightclick_override
 
 
 local timer = 0
+local breath_timer = 0
+local breath_update_rate = renowned_rpg.settings.breath.update_rate
 
 local hunger_timer = 0
+local hunger_update_rate = renowned_rpg.settings.hunger.update_rate
 local hunger_base_rate = renowned_rpg.settings.hunger.base_rate
 local hunger_move_step = renowned_rpg.settings.hunger.move_step
 local hunger_dig_step = renowned_rpg.settings.hunger.dig_step
 local hunger_place_step = renowned_rpg.settings.hunger.place_step
 
 local thirst_timer = 0
+local thirst_update_rate = renowned_rpg.settings.thirst.update_rate
 local thirst_base_rate = renowned_rpg.settings.thirst.base_rate
 local thirst_move_step = renowned_rpg.settings.thirst.move_step
 local thirst_dig_step = renowned_rpg.settings.thirst.dig_step
@@ -252,7 +256,7 @@ local sprint_jump = renowned_rpg.settings.sprint.jump_multiplier
 minetest.register_globalstep(function(dtime)
 
     timer = timer + dtime
-    damage_timer = damage_timer + dtime
+    breath_timer = breath_timer + dtime
     hunger_timer = hunger_timer + dtime
     thirst_timer = thirst_timer + dtime
     sprint_timer = sprint_timer + dtime
@@ -263,6 +267,9 @@ minetest.register_globalstep(function(dtime)
 
         local player_name = player:get_player_name()
         local keys = player:get_player_control()
+        local is_moving = keys.up or keys.down or keys.left or keys.right
+
+
 
         -- refill player's hp after doing damage animations
         if renowned_rpg.players[player_name].damaged then
@@ -294,6 +301,8 @@ minetest.register_globalstep(function(dtime)
             renowned_rpg.players[player_name].sprinting = false
         end
 
+
+
         if sprint_timer > sprint_update_rate then
             if renowned_rpg.players[player_name].sprinting then
                 local sprint = math_max(renowned_rpg:get_sprint(player)-sprint_timer, 0)
@@ -307,12 +316,9 @@ minetest.register_globalstep(function(dtime)
             sprint_timer = 0
         end
 
-        if timer > 2 then
-
+        if breath_timer > breath_update_rate then
             local breath = player:get_breath()
             local suffocating = false
-            local hunger = renowned_rpg:get_hunger(player)
-            local thirst = renowned_rpg:get_thirst(player)
 
             if breath < 11 then
                 player:set_breath(10)
@@ -338,15 +344,15 @@ minetest.register_globalstep(function(dtime)
                 end
                 renowned_rpg:update_breath_hud(player)
             end
+            breath_timer = 0
+        end
 
+        if hunger_timer > hunger_update_rate then
+            local hunger = renowned_rpg:get_hunger(player)
             local exaustion = renowned_rpg.players[player_name].exaustion + math_floor(dtime*100)
-            local hydration = renowned_rpg.players[player_name].hydration + math_floor(dtime*100)
 
-            if keys.up or keys.down or keys.left or keys.right then
-                --jump, right, left, LMB, RMB, sneak, aux1, down, up
+            if is_moving then
                 exaustion = exaustion + hunger_move_step
-                hydration = hydration + thirst_move_step
-                print("buttons pressed by " .. player_name .. ": " .. tostring(exaustion))
             end
 
             if exaustion > hunger_base_rate then
@@ -354,27 +360,37 @@ minetest.register_globalstep(function(dtime)
                 renowned_rpg:set_hunger(player, hunger)
                 renowned_rpg:update_hunger_hud(player)
                 exaustion = 0
-                print(player_name .. "is exausted: 1")
             end
             renowned_rpg.players[player_name].exaustion = exaustion
+
+            if hunger <= 0 then
+                player:set_hp(player:get_hp()-5)
+            end
+
+            hunger_timer = 0
+        end
+
+        if thirst_timer > thirst_update_rate then
+            local thirst = renowned_rpg:get_thirst(player)
+            local hydration = renowned_rpg.players[player_name].hydration + math_floor(dtime*100)
+
+            if is_moving then
+                hydration = hydration + thirst_move_step
+            end
 
             if hydration > thirst_base_rate then
                 thirst = math_max(thirst-1, 0)
                 renowned_rpg:set_thirst(player, thirst)
                 renowned_rpg:update_thirst_hud(player)
                 hydration = 0
-                print(player_name .. "is thirstified: 1")
             end
             renowned_rpg.players[player_name].hydration = hydration
 
-            if hunger <= 0 then 
-                player:set_hp(player:get_hp()-5)
-            end
             if thirst <= 0 then 
                 player:set_hp(player:get_hp()-5)
             end
 
-            timer = 0
+            thirst_timer = 0
         end
     end
 end)
