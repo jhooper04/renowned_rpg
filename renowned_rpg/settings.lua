@@ -1,6 +1,10 @@
 
 renowned_rpg.settings = {}
 
+renowned_rpg.settings.breath = {
+  update_rate = 1
+}
+
 renowned_rpg.settings.hunger = {
   update_rate = 2,
   base_rate = 480,

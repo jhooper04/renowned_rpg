@@ -30,16 +30,12 @@ minetest.register_on_joinplayer(function(player)
     local stats = renowned_rpg:get_total_stats(player)
 
     renowned_rpg.players[name] = {
-        prev_hps = {},
-        dead = false,
         damaged = false,
         suffocate = true,
         sprinting = false,
         exaustion = 0,
         hydration = 0,
     }
-
-    
 
     --debug
     --renowned_rpg:set_hunger(player, 5)
@@ -65,7 +61,6 @@ minetest.register_on_respawnplayer(function(player)
     renowned_rpg:set_sprint(player, stats.sprint)
     renowned_rpg:set_thirst(player, stats.thirst)
 
-    renowned_rpg.players[name].dead = false
     renowned_rpg.players[name].damaged = false
     renowned_rpg.players[name].suffocate = true
     renowned_rpg.players[name].sprinting = false
@@ -119,6 +114,8 @@ function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
 	local time_prorate = bound(tflp / full_punch_interval, 0, 1)
 	local damage = 0
     local total_armor_rating = 0
+
+    print(dump(caps))
   
 	for group, damage_rating in pairs(caps.damage_groups or {}) do
 		local armor_rating = a_groups[group] or 0
@@ -234,8 +231,6 @@ beds.on_rightclick = beds_on_rightclick_override
 
 
 local timer = 0
-local fast_timer = 0
-local hunger_timer = 0
 
 local hunger_timer = 0
 local hunger_base_rate = renowned_rpg.settings.hunger.base_rate
@@ -257,6 +252,7 @@ local sprint_jump = renowned_rpg.settings.sprint.jump_multiplier
 minetest.register_globalstep(function(dtime)
 
     timer = timer + dtime
+    damage_timer = damage_timer + dtime
     hunger_timer = hunger_timer + dtime
     thirst_timer = thirst_timer + dtime
     sprint_timer = sprint_timer + dtime
@@ -268,12 +264,10 @@ minetest.register_globalstep(function(dtime)
         local player_name = player:get_player_name()
         local keys = player:get_player_control()
 
-        -- handle player damaged
+        -- refill player's hp after doing damage animations
         if renowned_rpg.players[player_name].damaged then
-            print("!!!" .. player_name .. " b4 damaged cleared!!!")
-            player:set_hp(20)
+            player:set_hp(20, {damage_sim=true})
             renowned_rpg.players[player_name].damaged = false
-            print("!!!" .. player_name .. " aft damaged cleared!!!")
         end
 
         if keys.aux1 then 
@@ -419,32 +413,43 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 
     local name = player:get_player_name()
 
-    print(name .. ", hp change: " .. tostring(hp_change).." reason: ")
-    print(dump(reason))
-
-    if renowned_rpg.players[name].dead or renowned_rpg.players[name].damaged then
+    --if the call to player:set_hp is passed the damage_sim flag in the reason,
+    --then the player's normal hp value is being set back to 20 so they don't die
+    --after damage simulations and shouldn't effect player's actual health value
+    if reason.damage_sim then
         return hp_change
-    end  
+    end
 
     local hp = renowned_rpg:get_hp(player)
     hp = hp + hp_change
     if hp <= 0 then
+        --hp is less than or zero so kill the player
         renowned_rpg:set_hp(player, 0)
-        renowned_rpg.players[name].dead = true
         return -20
     else
         if hp_change < 0 then
+            --player is damaged, so hp change is -1 to show damage animation
+            --while actual player health stat is reduced by damage amount
             renowned_rpg:set_hp(player, hp)
             renowned_rpg:update_health_hud(player)
             renowned_rpg.players[name].damaged = true
+            print("----------hurt--------------------")
+            print(name .. ", hp change: " .. tostring(hp_change).." reason: ")
+            print(dump(reason))
             return -1
-        else
+        elseif hp_change > 0 then
+            --player has been healed, no need for damage animation
             local stats = renowned_rpg:get_total_stats(player)
             renowned_rpg:set_hp(player, math_min(hp, stats.hlth))
             renowned_rpg:update_health_hud(player)
+            print("----------healed--------------------")
+            print(name .. ", hp change: " .. tostring(hp_change).." reason: ")
+            print(dump(reason))
+            return 20
+        else
+            return 0
         end
     end
-    return 0
 end, true)
 
 --minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
