@@ -2,6 +2,7 @@
 renowned_rpg.settings = {}
 
 renowned_rpg.settings.hunger = {
+  update_rate = 2,
   base_rate = 480,
   move_step = 6,
   dig_step = 8,
@@ -9,10 +10,17 @@ renowned_rpg.settings.hunger = {
 }
 
 renowned_rpg.settings.thirst = {
+  update_rate = 2,
   base_rate = 240,
   move_step = 6,
   dig_step = 8,
   place_step = 2,
+}
+
+renowned_rpg.settings.sprint = {
+  update_rate = 0.1,
+  speed_multiplier = 0.2,
+  jump_multiplier = 0.05,
 }
 
 renowned_rpg.settings.class_bonuses = {

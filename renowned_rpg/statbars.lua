@@ -159,6 +159,7 @@ function renowned_rpg.init_player_hud(self, player)
         color = 0xFFFFFF,
         value = sprint_state.value
     })
+    renowned_rpg:update_sprint_hud(player)
 
     create_statbar(player, "breath", {
         position = {x=0.59, y=0.89},
