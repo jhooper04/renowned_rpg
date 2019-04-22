@@ -278,42 +278,42 @@ end
 -- **************************** Public API functions **********************************
 -- ************************************************************************************
 
-function renowned_rpg.get_hp(self, player)
+function renowned_rpg.get_hp(player)
     return data_get_hp(player)
 end
-function renowned_rpg.set_hp(self, player, value)
+function renowned_rpg.set_hp(player, value)
     data_set_hp(player, value)
 end
 
-function renowned_rpg.get_breath(self, player)
+function renowned_rpg.get_breath(player)
     return data_get_breath(player)
 end
-function renowned_rpg.set_breath(self, player, value)
+function renowned_rpg.set_breath(player, value)
     data_set_breath(player, value)
 end
 
-function renowned_rpg.get_hunger(self, player)
+function renowned_rpg.get_hunger(player)
     return data_get_hunger(player)
 end
-function renowned_rpg.set_hunger(self, player, value)
+function renowned_rpg.set_hunger(player, value)
     data_set_hunger(player, value)
 end
 
-function renowned_rpg.get_sprint(self, player)
+function renowned_rpg.get_sprint(player)
     return data_get_sprint(player)
 end
-function renowned_rpg.set_sprint(self, player, value)
+function renowned_rpg.set_sprint(player, value)
     data_set_sprint(player, value)
 end
 
-function renowned_rpg.get_thirst(self, player)
+function renowned_rpg.get_thirst(player)
     return data_get_thirst(player)
 end
-function renowned_rpg.set_thirst(self, player, value)
+function renowned_rpg.set_thirst(player, value)
     data_set_thirst(player, value)
 end
 
-function renowned_rpg.add_xp(self, player, amount)
+function renowned_rpg.add_xp(player, amount)
     local total_xp = data_get_total_xp(player)
     total_xp = total_xp + amount
     data_set_total_xp(player, total_xp)
@@ -322,44 +322,44 @@ function renowned_rpg.add_xp(self, player, amount)
     --print(dump(player:get_luaentity()))
 end
 
-function renowned_rpg.set_xp(self, player, amount)
+function renowned_rpg.set_xp(player, amount)
     data_set_total_xp(player, amount)
     logic_update_level(player)
 end
 
-function renowned_rpg.get_xp(self, player)
+function renowned_rpg.get_xp(player)
     return data_get_total_xp(player)
 end
 
-function renowned_rpg.get_level(self, player)
+function renowned_rpg.get_level(player)
     return data_get_level(player)
 end
 
-function renowned_rpg.get_upgrade_points(self, player)
+function renowned_rpg.get_upgrade_points(player)
     return data_get_upgrade_points(player)
 end
 
-function renowned_rpg.get_pending_upgrades(self, player)
+function renowned_rpg.get_pending_upgrades(player)
     return data_get_pending_upgrades(player)
 end
 
-function renowned_rpg.get_applied_stats(self, player)
+function renowned_rpg.get_applied_stats(player)
     return data_get_applied_stats(player)
 end
 
-function renowned_rpg.get_pending_stats(self, player)
+function renowned_rpg.get_pending_stats(player)
     return data_get_pending_stats(player)
 end
 
-function renowned_rpg.get_total_stats(self, player)
+function renowned_rpg.get_total_stats(player)
     return data_get_total_stats(player)
 end
-function renowned_rpg.update_total_stats(self, player)
+function renowned_rpg.update_total_stats(player)
     logic_update_total_stats(player)
-    --renowned_rpg:update_all_huds(player)
+    --renowned_rpg.update_all_huds(player)
 end
 
-function renowned_rpg.plus_pending_stat(self, player, statname)
+function renowned_rpg.plus_pending_stat(player, statname)
     local points = data_get_pending_upgrades(player)
     local stats = data_get_pending_stats(player)
     
@@ -369,7 +369,7 @@ function renowned_rpg.plus_pending_stat(self, player, statname)
         data_set_pending_upgrades(player, points-1)
     end
 end
-function renowned_rpg.minus_pending_stat(self, player, statname)
+function renowned_rpg.minus_pending_stat(player, statname)
     local points = data_get_pending_upgrades(player)
     local stats = data_get_pending_stats(player)
     if stats[statname] > 0 then
@@ -379,7 +379,7 @@ function renowned_rpg.minus_pending_stat(self, player, statname)
     end
 end
 
-function renowned_rpg.apply_stats(self, player)
+function renowned_rpg.apply_stats(player)
     local applied = data_get_applied_stats(player)
     local pending = data_get_pending_stats(player)
     local upgrades = data_get_upgrade_points(player)
@@ -399,10 +399,10 @@ function renowned_rpg.apply_stats(self, player)
     data_set_pending_upgrades(player, upgrades-point_diff)
     data_set_upgrade_points(player, upgrades-point_diff)
     logic_update_total_stats(player)
-    renowned_rpg:update_all_huds(player)
+    renowned_rpg.update_all_huds(player)
 end
 
-function renowned_rpg.inc_nodes_dug(self, player, amount)
+function renowned_rpg.inc_nodes_dug(player, amount)
     if amount == nil then
         amount = 1
     end
@@ -410,7 +410,7 @@ function renowned_rpg.inc_nodes_dug(self, player, amount)
     data_set_stats_nodes_dug(player, nodes_dug+amount)
 end
 
-function renowned_rpg.inc_nodes_placed(self, player, amount)
+function renowned_rpg.inc_nodes_placed(player, amount)
     if amount == nil then
         amount = 1
     end
@@ -418,7 +418,7 @@ function renowned_rpg.inc_nodes_placed(self, player, amount)
     data_set_stats_nodes_placed(player, nodes_placed+amount)
 end
 
-function renowned_rpg.get_xp_bar_state(self, player)
+function renowned_rpg.get_xp_bar_state(player)
     local ret = {}
     local upgrades = data_get_upgrade_points(player)
     local total_xp = data_get_total_xp(player)
@@ -443,11 +443,11 @@ function renowned_rpg.get_xp_bar_state(self, player)
     return ret
 end
 
-function renowned_rpg.get_health_bar_state(self, player)
+function renowned_rpg.get_health_bar_state(player)
     local ret = {}
-    local stats = renowned_rpg:get_total_stats(player)
+    local stats = renowned_rpg.get_total_stats(player)
     
-    local hp = renowned_rpg:get_hp(player)
+    local hp = renowned_rpg.get_hp(player)
     local hp_max = stats.hlth
 
     ret = {
@@ -458,9 +458,9 @@ function renowned_rpg.get_health_bar_state(self, player)
     return ret
 end
 
--- function renowned_rpg.get_attack_bar_state(self, player)
+-- function renowned_rpg.get_attack_bar_state(player)
 --     local ret = {}
---     local stats = renowned_rpg:get_total_stats(player)
+--     local stats = renowned_rpg.get_total_stats(player)
     
 --     local attk = stats.attk
 --     local bonus = 0
@@ -473,9 +473,9 @@ end
     
 --     return ret
 -- end
-function renowned_rpg.get_defense_bar_state(self, player)
+function renowned_rpg.get_defense_bar_state(player)
     local ret = {}
-    local stats = renowned_rpg:get_total_stats(player)
+    local stats = renowned_rpg.get_total_stats(player)
     
     local def = stats.def
     local bonus = 0
@@ -489,11 +489,11 @@ function renowned_rpg.get_defense_bar_state(self, player)
     return ret
 end
 
-function renowned_rpg.get_breath_bar_state(self, player)
+function renowned_rpg.get_breath_bar_state(player)
     local ret = {}
-    local stats = renowned_rpg:get_total_stats(player)
+    local stats = renowned_rpg.get_total_stats(player)
     
-    local breath = renowned_rpg:get_breath(player)
+    local breath = renowned_rpg.get_breath(player)
     local breath_max = stats.breath
 
     ret = {
@@ -504,11 +504,11 @@ function renowned_rpg.get_breath_bar_state(self, player)
     return ret
 end
 
-function renowned_rpg.get_hunger_bar_state(self, player)
+function renowned_rpg.get_hunger_bar_state(player)
     local ret = {}
-    local stats = renowned_rpg:get_total_stats(player)
+    local stats = renowned_rpg.get_total_stats(player)
     
-    local hunger = renowned_rpg:get_hunger(player)
+    local hunger = renowned_rpg.get_hunger(player)
     local hunger_max = stats.hunger
 
     ret = {
@@ -519,11 +519,11 @@ function renowned_rpg.get_hunger_bar_state(self, player)
     return ret
 end
 
-function renowned_rpg.get_sprint_bar_state(self, player)
+function renowned_rpg.get_sprint_bar_state(player)
     local ret = {}
-    local stats = renowned_rpg:get_total_stats(player)
+    local stats = renowned_rpg.get_total_stats(player)
     
-    local sprint = renowned_rpg:get_sprint(player)
+    local sprint = renowned_rpg.get_sprint(player)
     local sprint_max = stats.sprint
 
     ret = {
@@ -534,11 +534,11 @@ function renowned_rpg.get_sprint_bar_state(self, player)
     return ret
 end
 
-function renowned_rpg.get_thirst_bar_state(self, player)
+function renowned_rpg.get_thirst_bar_state(player)
     local ret = {}
-    local stats = renowned_rpg:get_total_stats(player)
+    local stats = renowned_rpg.get_total_stats(player)
     
-    local thirst = renowned_rpg:get_thirst(player)
+    local thirst = renowned_rpg.get_thirst(player)
     local thirst_max = stats.thirst
 
     ret = {
@@ -549,7 +549,7 @@ function renowned_rpg.get_thirst_bar_state(self, player)
     return ret
 end
 
-function renowned_rpg.register_food(self, itemstring, satiation, replace_with, poison, heal, sound)
+function renowned_rpg.register_food(itemstring, satiation, replace_with, poison, heal, sound)
     registered_food[itemstring] = {}
     registered_food[itemstring].satiation = satiation
     registered_food[itemstring].replace_with = replace_with
@@ -558,7 +558,7 @@ function renowned_rpg.register_food(self, itemstring, satiation, replace_with, p
     registered_food[itemstring].sound = sound
 end
 
-function renowned_rpg.get_registered_food(self, itemstring)
+function renowned_rpg.get_registered_food(itemstring)
     if registered_food[itemstring] then
         return registered_food[itemstring]
     else

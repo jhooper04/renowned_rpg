@@ -87,16 +87,16 @@ local function unhide_statbar(player, stat_name, text, value)
     player:hud_change(huds_table[player_name][stat_name.."_bar_fill"], "number", math.floor(value*STATBAR_WIDTH))
 end
 
-function renowned_rpg.init_player_hud(self, player)
+function renowned_rpg.init_player_hud(player)
     local player_name = player:get_player_name()
-    local xp_state = renowned_rpg:get_xp_bar_state(player)
-    --local attack_state = renowned_rpg:get_attack_bar_state(player)
-    local defense_state = renowned_rpg:get_defense_bar_state(player)
-    local health_state = renowned_rpg:get_health_bar_state(player)
-    local hunger_state = renowned_rpg:get_hunger_bar_state(player)
-    local breath_state = renowned_rpg:get_breath_bar_state(player)
-    local sprint_state = renowned_rpg:get_sprint_bar_state(player)
-    local thirst_state = renowned_rpg:get_thirst_bar_state(player)
+    local xp_state = renowned_rpg.get_xp_bar_state(player)
+    --local attack_state = renowned_rpg.get_attack_bar_state(player)
+    local defense_state = renowned_rpg.get_defense_bar_state(player)
+    local health_state = renowned_rpg.get_health_bar_state(player)
+    local hunger_state = renowned_rpg.get_hunger_bar_state(player)
+    local breath_state = renowned_rpg.get_breath_bar_state(player)
+    local sprint_state = renowned_rpg.get_sprint_bar_state(player)
+    local thirst_state = renowned_rpg.get_thirst_bar_state(player)
 
     hide_builtin_statbars(player)
 
@@ -159,7 +159,7 @@ function renowned_rpg.init_player_hud(self, player)
         color = 0xFFFFFF,
         value = sprint_state.value
     })
-    renowned_rpg:update_sprint_hud(player)
+    renowned_rpg.update_sprint_hud(player)
 
     create_statbar(player, "breath", {
         position = {x=0.59, y=0.89},
@@ -170,7 +170,7 @@ function renowned_rpg.init_player_hud(self, player)
         color = 0xFFFFFF,
         value = breath_state.value
     })
-    renowned_rpg:update_breath_hud(player)
+    renowned_rpg.update_breath_hud(player)
 
     create_statbar(player, "xp", {
         position = {x=0.98, y=0.3},
@@ -194,39 +194,39 @@ function renowned_rpg.init_player_hud(self, player)
   
 end
 
-function renowned_rpg.update_all_huds(self, player)
+function renowned_rpg.update_all_huds(player)
     local player_name = player:get_player_name()
-    local xp_state = renowned_rpg:get_xp_bar_state(player)
-    local health_state = renowned_rpg:get_health_bar_state(player)
-    local hunger_state = renowned_rpg:get_hunger_bar_state(player)
+    local xp_state = renowned_rpg.get_xp_bar_state(player)
+    local health_state = renowned_rpg.get_health_bar_state(player)
+    local hunger_state = renowned_rpg.get_hunger_bar_state(player)
 
     update_statbar(player, "health", health_state.text, health_state.value)
     update_statbar(player, "xp", xp_state.text, xp_state.value)
     update_statbar(player, "hunger", hunger_state.text, hunger_state.value)
 
-    renowned_rpg:update_breath_hud(player)
-    renowned_rpg:update_sprint_hud(player)
-    renowned_rpg:update_thirst_hud(player)
+    renowned_rpg.update_breath_hud(player)
+    renowned_rpg.update_sprint_hud(player)
+    renowned_rpg.update_thirst_hud(player)
 
     player:hud_change(huds_table[player_name].xp_bar_upgrade_text, "text", 
         xp_state.upgrades_text)
 end
 
-function renowned_rpg.update_health_hud(self, player)
-    local health_state = renowned_rpg:get_health_bar_state(player)
+function renowned_rpg.update_health_hud(player)
+    local health_state = renowned_rpg.get_health_bar_state(player)
 
     update_statbar(player, "health", health_state.text, health_state.value)
 end
 
-function renowned_rpg.update_hunger_hud(self, player)
-    local hunger_state = renowned_rpg:get_hunger_bar_state(player)
+function renowned_rpg.update_hunger_hud(player)
+    local hunger_state = renowned_rpg.get_hunger_bar_state(player)
 
     update_statbar(player, "hunger", hunger_state.text, hunger_state.value)
 end
 
-function renowned_rpg.update_breath_hud(self, player)
-    --local sprint_state = renowned_rpg:get_sprint_bar_state(player)
-    local breath_state = renowned_rpg:get_breath_bar_state(player)
+function renowned_rpg.update_breath_hud(player)
+    --local sprint_state = renowned_rpg.get_sprint_bar_state(player)
+    local breath_state = renowned_rpg.get_breath_bar_state(player)
 
     if breath_state.value ~= 1 then
         -- if sprint_state.value ~= 1 then
@@ -240,9 +240,9 @@ function renowned_rpg.update_breath_hud(self, player)
     end
 end
 
-function renowned_rpg.update_sprint_hud(self, player)
-    local sprint_state = renowned_rpg:get_sprint_bar_state(player)
-    --local breath_state = renowned_rpg:get_breath_bar_state(player)
+function renowned_rpg.update_sprint_hud(player)
+    local sprint_state = renowned_rpg.get_sprint_bar_state(player)
+    --local breath_state = renowned_rpg.get_breath_bar_state(player)
 
     if sprint_state.value ~= 1 then
         -- if breath_state.value ~= 1 then
@@ -256,8 +256,8 @@ function renowned_rpg.update_sprint_hud(self, player)
     end
 end
 
-function renowned_rpg.update_thirst_hud(self, player)
-    local thirst_state = renowned_rpg:get_thirst_bar_state(player)
+function renowned_rpg.update_thirst_hud(player)
+    local thirst_state = renowned_rpg.get_thirst_bar_state(player)
 
     --if sprint_state.value ~= 1 then
         unhide_statbar(player, "thirst", thirst_state.text, thirst_state.value)
@@ -266,9 +266,9 @@ function renowned_rpg.update_thirst_hud(self, player)
     --end
 end
 
-function renowned_rpg.update_xp_hud(self, player)
+function renowned_rpg.update_xp_hud(player)
     local player_name = player:get_player_name()
-    local xp_state = renowned_rpg:get_xp_bar_state(player)
+    local xp_state = renowned_rpg.get_xp_bar_state(player)
 
     update_statbar(player, "xp", xp_state.text, xp_state.value)
     player:hud_change(huds_table[player_name].xp_bar_upgrade_text, "text", 

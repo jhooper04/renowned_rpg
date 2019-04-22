@@ -4,13 +4,13 @@ minetest.register_craftitem("renowned_rpg:health_potion", {
 	inventory_image = "renowned_rpg_health_potion.png",
 	on_use = function(itemstack, player, pointed_thing)
   
-        local stats = renowned_rpg:get_total_stats(player)
+        local stats = renowned_rpg.get_total_stats(player)
     
-        if renowned_rpg:get_hp(player) >= stats.hlth then
+        if renowned_rpg.get_hp(player) >= stats.hlth then
             return itemstack
         else
-            renowned_rpg:set_hp(player, stats.hlth)
-            renowned_rpg:update_health_hud(player)
+            renowned_rpg.set_hp(player, stats.hlth)
+            renowned_rpg.update_health_hud(player)
             itemstack:take_item()
             return itemstack
         end
@@ -34,11 +34,11 @@ minetest.register_tool("renowned_rpg:leather_vessel", {
     liquids_pointable = true,
 	on_use = function(itemstack, player, pointed_thing)
   
-        local stats = renowned_rpg:get_total_stats(player)
+        local stats = renowned_rpg.get_total_stats(player)
         local meta = itemstack:get_meta()
         local def = itemstack:get_definition()
         local contents = meta:get_int("contents")
-        local thirst = renowned_rpg:get_thirst(player)
+        local thirst = renowned_rpg.get_thirst(player)
 
         if contents == nil then
             contents = 0
@@ -57,8 +57,8 @@ minetest.register_tool("renowned_rpg:leather_vessel", {
                 meta:set_int("contents", contents)
                 itemstack:set_wear(65535-math.floor(contents/def.capacity*65535))
             end
-            renowned_rpg:set_thirst(player, thirst)
-            renowned_rpg:update_thirst_hud(player)
+            renowned_rpg.set_thirst(player, thirst)
+            renowned_rpg.update_thirst_hud(player)
         end
 
         return itemstack

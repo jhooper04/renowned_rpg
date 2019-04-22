@@ -21,15 +21,15 @@ end
 unified_inventory.register_page("renowned_rpg_stats_form", {
     get_formspec = function(player)
         local player_name = player:get_player_name()
-        local applied_stats = renowned_rpg:get_applied_stats(player)
-        local pending_stats = renowned_rpg:get_pending_stats(player)
+        local applied_stats = renowned_rpg.get_applied_stats(player)
+        local pending_stats = renowned_rpg.get_pending_stats(player)
         local formspec = "background[0.06,0.06;13.9,7.52;ui_renowned_rpg_stats_form.png]"
   
         formspec = formspec .. "label[1,0.2;STATISTICS AND UPGRADES]"
         
         --Level
         formspec = formspec .. "label[9.5,0.2;LEVEL]"
-        formspec = formspec .. generate_number_image(11.9, 0.25, 0.5, renowned_rpg:get_level(player))
+        formspec = formspec .. generate_number_image(11.9, 0.25, 0.5, renowned_rpg.get_level(player))
         
         formspec = formspec .. "label[3.95,1.15;Current]"
         formspec = formspec .. "label[6.45,1.15;Upgrades]"
@@ -74,7 +74,7 @@ unified_inventory.register_page("renowned_rpg_stats_form", {
         formspec = formspec .. generate_number_image(6.75, 4.42, 0.4, pending_stats["spd"])
         formspec = formspec .. "image_button[7.1,4.42;0.5,0.5;ui_renowned_rpg_plus.png;plus_spd;]"
         
-        formspec = formspec .. "label[3.35,5.4;" .. renowned_rpg:get_pending_upgrades(player) .. " Upgrades Remaining]"
+        formspec = formspec .. "label[3.35,5.4;" .. renowned_rpg.get_pending_upgrades(player) .. " Upgrades Remaining]"
         formspec = formspec .. "button[5.975,5.4;1.7,0.5;apply_btn;Apply]"
   
         return {formspec=formspec, draw_inventory = false, draw_item_list=false}
@@ -111,38 +111,38 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     local action_happenned = false
 
     if fields["minus_attk"] then
-        renowned_rpg:minus_pending_stat(player, "attk")
+        renowned_rpg.minus_pending_stat(player, "attk")
         action_happenned = true
     elseif fields["plus_attk"] then
-        renowned_rpg:plus_pending_stat(player, "attk")
+        renowned_rpg.plus_pending_stat(player, "attk")
         action_happenned = true
     elseif fields["minus_def"] then
-        renowned_rpg:minus_pending_stat(player, "def")
+        renowned_rpg.minus_pending_stat(player, "def")
         action_happenned = true
     elseif fields["plus_def"] then
-        renowned_rpg:plus_pending_stat(player, "def")
+        renowned_rpg.plus_pending_stat(player, "def")
         action_happenned = true
     elseif fields["minus_hlth"] then
-        renowned_rpg:minus_pending_stat(player, "hlth")
+        renowned_rpg.minus_pending_stat(player, "hlth")
         action_happenned = true
     elseif fields["plus_hlth"] then
-        renowned_rpg:plus_pending_stat(player, "hlth")
+        renowned_rpg.plus_pending_stat(player, "hlth")
         action_happenned = true
     elseif fields["minus_stam"] then
-        renowned_rpg:minus_pending_stat(player, "stam")
+        renowned_rpg.minus_pending_stat(player, "stam")
         action_happenned = true
     elseif fields["plus_stam"] then
-        renowned_rpg:plus_pending_stat(player, "stam")
+        renowned_rpg.plus_pending_stat(player, "stam")
         action_happenned = true
     elseif fields["minus_spd"] then
-        renowned_rpg:minus_pending_stat(player, "spd")
+        renowned_rpg.minus_pending_stat(player, "spd")
         action_happenned = true
     elseif fields["plus_spd"] then
-        renowned_rpg:plus_pending_stat(player, "spd")
+        renowned_rpg.plus_pending_stat(player, "spd")
         action_happenned = true
     elseif fields["apply_btn"] then
-        renowned_rpg:apply_stats(player)
-        renowned_rpg:update_all_huds(player)
+        renowned_rpg.apply_stats(player)
+        renowned_rpg.update_all_huds(player)
         action_happenned = true
     end
 
