@@ -90,8 +90,7 @@ end
 function renowned_rpg.init_player_hud(player)
     local player_name = player:get_player_name()
     local xp_state = renowned_rpg.get_xp_bar_state(player)
-    --local attack_state = renowned_rpg.get_attack_bar_state(player)
-    local defense_state = renowned_rpg.get_defense_bar_state(player)
+    local attk_def_state = renowned_rpg.get_attk_def_bar_state(player)
     local health_state = renowned_rpg.get_health_bar_state(player)
     local hunger_state = renowned_rpg.get_hunger_bar_state(player)
     local breath_state = renowned_rpg.get_breath_bar_state(player)
@@ -110,24 +109,14 @@ function renowned_rpg.init_player_hud(player)
         value = health_state.value
     })
 
-    -- create_statbar(player, "attack", {
-    --     position = {x=0.49, y=0.89},
-    --     alignment = {x=1, y=1},
-    --     icon = "renowned_rpg_attack_icon.png",
-    --     fill = "renowned_rpg_bar_grey_fill.png",
-    --     label = attack_state.text,
-    --     color = 0xFFFFFF,
-    --     value = attack_state.value
-    -- })
-
-    create_statbar(player, "defense", {
+    create_statbar(player, "attk_def", {
         position = {x=0.49, y=0.91},
         alignment = {x=1, y=1},
-        icon = "renowned_rpg_defense_icon.png",
+        icon = "renowned_rpg_attack_icon.png",
         fill = "renowned_rpg_bar_grey_fill.png",
-        label = defense_state.text,
+        label = attk_def_state.text,
         color = 0xFFFFFF,
-        value = defense_state.value
+        value = attk_def_state.value
     })
 
     create_statbar(player, "hunger", {
@@ -199,10 +188,12 @@ function renowned_rpg.update_all_huds(player)
     local xp_state = renowned_rpg.get_xp_bar_state(player)
     local health_state = renowned_rpg.get_health_bar_state(player)
     local hunger_state = renowned_rpg.get_hunger_bar_state(player)
+    local attk_def_state = renowned_rpg.get_attk_def_bar_state(player)
 
     update_statbar(player, "health", health_state.text, health_state.value)
     update_statbar(player, "xp", xp_state.text, xp_state.value)
     update_statbar(player, "hunger", hunger_state.text, hunger_state.value)
+    update_statbar(player, "attk_def", attk_def_state.text, attk_def_state.value)
 
     renowned_rpg.update_breath_hud(player)
     renowned_rpg.update_sprint_hud(player)
@@ -210,6 +201,12 @@ function renowned_rpg.update_all_huds(player)
 
     player:hud_change(huds_table[player_name].xp_bar_upgrade_text, "text", 
         xp_state.upgrades_text)
+end
+
+function renowned_rpg.update_hunger_hud(player)
+    local attk_def_state = renowned_rpg.get_attk_def_bar_state(player)
+
+    update_statbar(player, "attk_def", attk_def_state.text, attk_def_state.value)
 end
 
 function renowned_rpg.update_health_hud(player)

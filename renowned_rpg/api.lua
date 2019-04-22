@@ -418,6 +418,10 @@ function renowned_rpg.inc_nodes_placed(player, amount)
     data_set_stats_nodes_placed(player, nodes_placed+amount)
 end
 
+function renowned_rpg.calc_damage(attk, def)
+    return attk * attk / (attk + def)
+end
+
 function renowned_rpg.get_xp_bar_state(player)
     local ret = {}
     local upgrades = data_get_upgrade_points(player)
@@ -458,29 +462,14 @@ function renowned_rpg.get_health_bar_state(player)
     return ret
 end
 
--- function renowned_rpg.get_attack_bar_state(player)
---     local ret = {}
---     local stats = renowned_rpg.get_total_stats(player)
-    
---     local attk = stats.attk
---     local bonus = 0
-
---     ret.text = string.format("ATTK: %d", attk)
---     if bonus > 0 then
---         ret.text = ret.text .. "+" .. tostring(bonus)
---     end
---     ret.value = 1
-    
---     return ret
--- end
-function renowned_rpg.get_defense_bar_state(player)
+function renowned_rpg.get_attk_def_bar_state(player)
     local ret = {}
     local stats = renowned_rpg.get_total_stats(player)
     
     local def = stats.def
     local bonus = 0
 
-    ret.text = string.format("DEF: %d", def)
+    ret.text = string.format("ATK: %d, DEF: %d", stats.attk, def)
     if bonus > 0 then
         ret.text = ret.text .. "+" .. tostring(bonus)
     end

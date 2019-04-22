@@ -70,12 +70,27 @@ minetest.register_on_respawnplayer(function(player)
     renowned_rpg.update_all_huds(player)
 end)
 
+local function get_closest_player(pos)
+    local players = minetest_get_connected_players()
+    local min_dist = 99999
+    local ret_player = nil
+    for n, player in ipairs(players) do
+        local player_pos = player:get_pos()
+        local dist = vector.distance(pos, player_pos)
+        if dist < min_dist then
+            min_dist = dist
+            ret_player = player
+        end
+    end
+    return ret_player
+end
+
 cmi.register_on_activatemob(function(entity, dtime)
   local mob_entity = entity:get_luaentity()
   if mob_entity.type == "monster" then
-  
+
     local desc = minetest_registered_craftitems[mob_entity.name].description
-    local level = math_random(1, 10)
+
     if mob_entity.mob_xp_level ~= nil then
       entity:set_properties({
         nametag = desc .. " [Level " .. mob_entity.mob_xp_level .. "]",
@@ -83,6 +98,18 @@ cmi.register_on_activatemob(function(entity, dtime)
       })
       return
     end
+
+    --find the nearest player so mob level depends on player's level
+    local pos = entity:get_pos()
+    local near_player = get_closest_player(pos)
+    local near_level = 1
+    if near_player ~= nil then
+        near_level = renowned_rpg.get_level(near_player)
+    end
+
+    local level = math_random(math_max(near_level-10, 1), near_level+10)
+    local attk_bal = math_random(3, 7)*0.1
+    local def_bal = math_random(3, 7)*0.1
     local max_hp = minetest_registered_entities[mob_entity.name].hp_max
     local damage = minetest_registered_entities[mob_entity.name].damage
     local nametag = desc .. " [Level " .. level .. "]"
@@ -94,7 +121,12 @@ cmi.register_on_activatemob(function(entity, dtime)
     mob_entity.mob_xp_level = level
     mob_entity.hp_max = math_floor(level * (max_hp * 0.45))
     mob_entity.damage = math_floor(level * (damage * 0.5))
+    mob_entity.renowned_attk = math_floor(level * (damage * attk_bal))
+    mob_entity.renowned_def = math_floor(level * (damage * def_bal))
     mob_entity.health = mob_entity.hp_max
+    --print("attk_bal: "..tostring(attk_bal))
+    --print("def_bal: "..tostring(def_bal))
+    --print(dump(mob_entity))
   end
 end)
 
@@ -108,31 +140,63 @@ local function bound(x, minb, maxb)
 	end
 end
 
+minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
+  if minetest_is_player(hitter) == false then
+    local mob_entity = hitter:get_luaentity()
+    local stats = renowned_rpg.get_total_stats(player)
+
+    local offender_attk = mob_entity.renowned_attk
+    --local offender_def = mob_entity.renowned_def
+
+    --local defender_attk = stats.attk
+    local defender_def = stats.def
+
+    local damage = renowned_rpg.calc_damage(offender_attk, defender_def) -- offender_attk * offender_attk / (offender_attk + defender_def) 
+
+    print("--------player hit---------")
+    print("offender attk: "..tostring(offender_attk))
+    print("defender def: "..tostring(defender_def))
+    print("damage: "..tostring(damage))
+    --print(dump(mob_entity))
+
+    player:set_hp(player:get_hp()-damage)
+    return true
+  end
+end)
+
 function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
 	local a_groups = mob:get_armor_groups() or {}
 	local full_punch_interval = caps.full_punch_interval or 1.4
 	local time_prorate = bound(tflp / full_punch_interval, 0, 1)
 	local damage = 0
     local total_armor_rating = 0
+    local mob_entity = mob:get_luaentity()
 
+    local offender_attk = 0
+    local defender_def = mob_entity.renowned_def
+
+    print("------------cmi.damage_calculator---------------")
+    print("               tflp: "..tostring(tflp))
+    print("full_punch_interval: "..tostring(full_punch_interval))
+    print("       time_prorate: "..tostring(time_prorate))
     print(dump(caps))
   
-	for group, damage_rating in pairs(caps.damage_groups or {}) do
-		local armor_rating = a_groups[group] or 0
-        damage = damage + damage_rating * (armor_rating / 100)
-        total_armor_rating = total_armor_rating + armor_rating
-	end
+	-- for group, damage_rating in pairs(caps.damage_groups or {}) do
+	-- 	local armor_rating = a_groups[group] or 0
+    --     damage = damage + damage_rating * (armor_rating / 100)
+    --     total_armor_rating = total_armor_rating + armor_rating
+	-- end
   
     if puncher:is_player() then
         local player_stats = renowned_rpg.get_total_stats(puncher)
-        damage = damage + player_stats.attk * (total_armor_rating / 100)
+
+        offender_attk = player_stats.attk
+        --damage = damage + player_stats.attk * (total_armor_rating / 100)
     end
-    --print('here ' .. math.floor(damage * time_prorate))
-    --print(dump(puncher:get_player_control()))
-    --print("mob: " .. mob:get_luaentity().name)
-    --print(dump(puncher))
-    --print("--------------------------------------------")
-    --print("ret = " .. math.floor(damage * time_prorate))
+
+    damage = renowned_rpg.calc_damage(offender_attk, defender_def)
+    print("             damage: "..tostring(damage))
+    print("    damage prorated: "..tostring(math_floor(damage * time_prorate)))
 	return math.floor(damage * time_prorate)
 end
 
@@ -467,32 +531,6 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
         end
     end
 end, true)
-
---minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
-  --if minetest_is_player(hitter) == false then
-    --local mob_entity = hitter:get_luaentity()
-    --local stats = renowned_rpg.get_total_stats(player)
-    
-    --local name = player:get_player_name()
-  
-    --if renowned_rpg.get_hp(player)-damage <= 0 then
-    --  renowned_rpg.player_dead[name] = true
-    --  print('should be dead')
-    --  player:set_hp(0)
-    --end
-    
-    --if damage > 0 then
-      
-    --end
-    --print("-------------------------------------------------")
-    --print(player:get_player_name() .. " hitter: " .. mob_entity.name .. " damage=" .. damage)
-    --print(dump(stats))
-    --print(damage * (20 / stats.hlth))
-    --damage = damage * (20 / stats.hlth)
-    --armor:punch(player, hitter, time_from_last_punch, tool_capabilities)
-    --return damage
-  --end
---end)
 
 local function eat_food(def, itemstack, player, pointed_thing)
     if player ~= nil and itemstack:take_item() ~= nil then
