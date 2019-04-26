@@ -356,7 +356,6 @@ function renowned_rpg.get_total_stats(player)
 end
 function renowned_rpg.update_total_stats(player)
     logic_update_total_stats(player)
-    --renowned_rpg.update_all_huds(player)
 end
 
 function renowned_rpg.plus_pending_stat(player, statname)
@@ -469,7 +468,7 @@ function renowned_rpg.get_attk_def_bar_state(player)
     local def = stats.def
     local bonus = 0
 
-    ret.text = string.format("ATK: %d, DEF: %d", stats.attk, def)
+    ret.text = string.format("AT %d, DE %d", stats.attk, def)
     if bonus > 0 then
         ret.text = ret.text .. "+" .. tostring(bonus)
     end

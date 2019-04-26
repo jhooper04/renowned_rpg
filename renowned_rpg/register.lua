@@ -5,6 +5,7 @@ local math_floor = math.floor
 local math_abs = math.abs
 local math_min = math.min
 local math_max = math.max
+local minetest_get_node = minetest.get_node
 local minetest_registered_craftitems = minetest.registered_craftitems
 local minetest_registered_entities = minetest.registered_entities
 local minetest_is_player = minetest.is_player
@@ -87,7 +88,7 @@ end
 
 cmi.register_on_activatemob(function(entity, dtime)
   local mob_entity = entity:get_luaentity()
-  if mob_entity.type == "monster" then
+  if mob_entity.type == "monster" or mob_entity.type == "npc" then
 
     local desc = minetest_registered_craftitems[mob_entity.name].description
 
@@ -173,7 +174,11 @@ function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
     local mob_entity = mob:get_luaentity()
 
     local offender_attk = 0
-    local defender_def = mob_entity.renowned_def
+    local defender_def = 0
+
+    if mob_entity.renowned_def ~= nil then
+        defender_def = mob_entity.renowned_def
+    end
 
     print("------------cmi.damage_calculator---------------")
     print("               tflp: "..tostring(tflp))
@@ -311,6 +316,7 @@ local thirst_base_rate = renowned_rpg.settings.thirst.base_rate
 local thirst_move_step = renowned_rpg.settings.thirst.move_step
 local thirst_dig_step = renowned_rpg.settings.thirst.dig_step
 local thirst_place_step = renowned_rpg.settings.thirst.place_step
+local thirst_hydrate_nodes = renowned_rpg.settings.thirst.hydrate_nodes
 
 local sprint_timer = 0
 local sprint_update_rate = renowned_rpg.settings.sprint.update_rate
@@ -437,11 +443,26 @@ minetest.register_globalstep(function(dtime)
         if thirst_timer > thirst_update_rate then
             local thirst = renowned_rpg.get_thirst(player)
             local hydration = renowned_rpg.players[player_name].hydration + math_floor(dtime*100)
+            local drinking = false
 
             if is_moving then
                 hydration = hydration + thirst_move_step
+            else
+                local node = minetest_get_node(player:get_pos())
+                for ni, hydrate_node in ipairs(thirst_hydrate_nodes) do
+                    if node.name == hydrate_node then
+                        drinking = true
+                    end
+                end
             end
 
+            if drinking then
+                local stats = renowned_rpg.get_total_stats(player)
+                thirst = math_min(thirst+thirst_update_rate, stats.thirst)
+                renowned_rpg.set_thirst(player, thirst)
+                renowned_rpg.update_thirst_hud(player)
+                hydration = 0
+            end
             if hydration > thirst_base_rate then
                 thirst = math_max(thirst-1, 0)
                 renowned_rpg.set_thirst(player, thirst)
@@ -474,6 +495,15 @@ minetest.register_on_placenode(function(pos, newnode, player, oldnode, itemstack
     renowned_rpg.players[player_name].hydration = hydration
 
     renowned_rpg.inc_nodes_placed(player)
+
+    local ppos = player:get_pos()
+    local biome = minetest.get_biome_data(ppos)
+    local xi = math_floor(ppos.x)%128
+    local zi = math_floor(ppos.z)%128
+    print(minetest.get_biome_name(biome.biome))
+    print("x: "..tostring(xi).." z: "..tostring(zi))
+    print("x: "..tostring(xi*128).." z: "..tostring(zi*128))
+    print(dump(biome))
 end)
 minetest.register_on_dignode(function(pos, oldnode, player)
     local player_name = player:get_player_name()
@@ -545,6 +575,7 @@ local function eat_food(def, itemstack, player, pointed_thing)
             hunger = math_min(hunger+def.satiation, stats.hunger)
             renowned_rpg.set_hunger(player, hunger)
             renowned_rpg.update_hunger_hud(player)
+            renowned_rpg.players[player_name].exaustion = 0
         end
         if def.heal ~= nil and hp < stats.hlth then 
             hp = math_min(hp+def.heal, stats.hlth)

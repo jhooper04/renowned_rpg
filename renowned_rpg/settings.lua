@@ -19,6 +19,9 @@ renowned_rpg.settings.thirst = {
   move_step = 6,
   dig_step = 8,
   place_step = 2,
+  hydrate_nodes = {
+    "default:water_source"
+  },
 }
 
 renowned_rpg.settings.sprint = {

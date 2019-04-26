@@ -3,3 +3,4 @@ unified_inventory
 cmi
 beds
 farming
+mobs

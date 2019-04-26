@@ -59,6 +59,8 @@ minetest.register_tool("renowned_rpg:leather_vessel", {
             end
             renowned_rpg.set_thirst(player, thirst)
             renowned_rpg.update_thirst_hud(player)
+            local player_name = player:get_player_name()
+            renowned_rpg.players[player_name].hydration = 0
         end
 
         return itemstack
