@@ -2,6 +2,7 @@
 --local function caches
 local math_random = math.random
 local math_floor = math.floor
+local math_ceil = math.ceil
 local math_abs = math.abs
 local math_min = math.min
 local math_max = math.max
@@ -38,12 +39,11 @@ minetest.register_on_joinplayer(function(player)
         hydration = 0,
     }
 
-    --debug
-    --renowned_rpg.set_hunger(player, 5)
-    --renowned_rpg.set_thirst(player, stats.thirst/2)
-    --renowned_rpg.update_total_stats(player)
-
     renowned_rpg.init_player_hud(player)
+    minetest.after(1, function(n)
+        local p = minetest_get_player_by_name(n)
+        renowned_rpg.update_breath_hud(p)
+    end, name)
 end)
 
 minetest.register_on_leaveplayer(function(player)
@@ -144,13 +144,15 @@ end
 minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
   if minetest_is_player(hitter) == false then
     local mob_entity = hitter:get_luaentity()
+    local player_name = player:get_player_name()
+
     local stats = renowned_rpg.get_total_stats(player)
-
     local offender_attk = mob_entity.renowned_attk
-    --local offender_def = mob_entity.renowned_def
 
-    --local defender_attk = stats.attk
     local defender_def = stats.def
+    if armor.def[player_name] and armor.def[player_name].level ~= nil then
+        defender_def = defender_def + renowned_rpg.calc_armor_def_bonus(stats, armor.def[player_name].level)
+    end
 
     local damage = renowned_rpg.calc_damage(offender_attk, defender_def) -- offender_attk * offender_attk / (offender_attk + defender_def) 
 
@@ -189,7 +191,7 @@ function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
         local weapon = puncher:get_wielded_item()
         local weapon_stats = renowned_rpg.get_tool_stats(weapon)
 
-        offender_attk = player_stats.attk + weapon_stats.attk
+        offender_attk = player_stats.attk + renowned_rpg.calc_tool_attk_bonus(player_stats, weapon_stats)
 
         renowned_rpg.after_tool_use(weapon, puncher, nil)
     end
@@ -197,7 +199,7 @@ function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
     damage = renowned_rpg.calc_damage(offender_attk, defender_def)
     print("             damage: "..tostring(damage))
     print("    damage prorated: "..tostring(math_floor(damage * time_prorate)))
-	return math.floor(damage * time_prorate)
+	return math_ceil(damage * time_prorate)
 end
 
 cmi.register_on_diemob(function(entity, cause)
@@ -220,6 +222,19 @@ cmi.register_on_diemob(function(entity, cause)
             end
         end
     end
+end)
+
+armor:register_on_update(function(player)
+    print("----------on update--------------")
+    renowned_rpg.update_attk_def_hud(player)
+end)
+
+armor:register_on_damage(function(player)
+    print("----------on damage--------------")
+end)
+
+armor:register_on_destroy(function(player)
+    print("----------on destroy--------------")
 end)
 
 local function heal_player(player)
@@ -293,8 +308,9 @@ function beds_on_rightclick_override(pos, player)
 end
 beds.on_rightclick = beds_on_rightclick_override
 
+local attk_def_timer = 0
+local attk_def_update_rate = renowned_rpg.settings.attk_def_stat.update_rate
 
-local timer = 0
 local breath_timer = 0
 local breath_update_rate = renowned_rpg.settings.breath.update_rate
 
@@ -320,7 +336,7 @@ local sprint_jump = renowned_rpg.settings.sprint.jump_multiplier
 
 minetest.register_globalstep(function(dtime)
 
-    timer = timer + dtime
+    attk_def_timer = attk_def_timer + dtime
     breath_timer = breath_timer + dtime
     hunger_timer = hunger_timer + dtime
     thirst_timer = thirst_timer + dtime
@@ -333,8 +349,6 @@ minetest.register_globalstep(function(dtime)
         local player_name = player:get_player_name()
         local keys = player:get_player_control()
         local is_moving = keys.up or keys.down or keys.left or keys.right
-
-
 
         -- refill player's hp after doing damage animations
         if renowned_rpg.players[player_name].damaged then
@@ -366,7 +380,10 @@ minetest.register_globalstep(function(dtime)
             renowned_rpg.players[player_name].sprinting = false
         end
 
-
+        if attk_def_timer > attk_def_update_rate then
+            renowned_rpg.update_attk_def_hud(player)
+            attk_def_timer = 0
+        end
 
         if sprint_timer > sprint_update_rate then
             if renowned_rpg.players[player_name].sprinting then
@@ -612,7 +629,6 @@ local function item_eat(hp_change, replace_with_item, itemstack, player, pointed
     end
     return eat_food(def, itemstack, player, pointed_thing)
 end
-
 
 local do_item_eat_original = core.do_item_eat
 core.do_item_eat = function(hp_change, replace_with_item, itemstack, user, pointed_thing)

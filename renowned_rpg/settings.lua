@@ -30,6 +30,10 @@ renowned_rpg.settings.sprint = {
   jump_multiplier = 0.05,
 }
 
+renowned_rpg.settings.attk_def_stat = {
+  update_rate = 4,
+}
+
 renowned_rpg.settings.class_bonuses = {
   soldier={
     attack=2,
@@ -68,10 +72,10 @@ renowned_rpg.settings.stat_multipliers={
   attk=1, def=1, hlth=5, stam=1, spd=1
 }
 renowned_rpg.settings.stat_defaults={
-  attk=0, def=0, hlth=20, stam=5, spd=0
+  attk=1, def=1, hlth=20, stam=0, spd=0
 }
 renowned_rpg.settings.stamina_defaults={
-  sprint=5, thirst=5, breath=0, hunger=15
+  sprint=5, thirst=10, breath=5, hunger=20
 }
 
 renowned_rpg.settings.max_level = 200

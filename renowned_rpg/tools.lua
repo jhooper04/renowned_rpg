@@ -4,9 +4,9 @@ local minetest_get_color_escape_sequence = minetest.get_color_escape_sequence
 
 function renowned_rpg.after_tool_use(itemstack, user, node, digparams)
 
-    print("----------- tool data ---------------")
+    --print("----------- tool data ---------------")
 
-    print(dump(renowned_rpg.get_tool_stats(itemstack)))
+    --print(dump(renowned_rpg.get_tool_stats(itemstack)))
 
     return itemstack
 end
@@ -42,6 +42,36 @@ end
 --     end
 --     return nil
 -- end
+
+minetest.override_item("default:sword_wood", {
+    original_description = "Wooden Sword",
+    description = renowned_rpg.create_tool_description("Wooden Sword", {}),
+    after_use = renowned_rpg.after_tool_use,
+})
+
+minetest.override_item("default:sword_stone", {
+    original_description = "Stone Sword",
+    description = renowned_rpg.create_tool_description("Stone Sword", {}),
+    after_use = renowned_rpg.after_tool_use,
+})
+
+minetest.override_item("default:sword_bronze", {
+    original_description = "Bronze Sword",
+    description = renowned_rpg.create_tool_description("Bronze Sword", {}),
+    after_use = renowned_rpg.after_tool_use,
+})
+
+minetest.override_item("default:sword_steel", {
+    original_description = "Steel Sword",
+    description = renowned_rpg.create_tool_description("Steel Sword", {}),
+    after_use = renowned_rpg.after_tool_use,
+})
+
+minetest.override_item("default:sword_mese", {
+    original_description = "Mese Sword",
+    description = renowned_rpg.create_tool_description("Mese Sword", {}),
+    after_use = renowned_rpg.after_tool_use,
+})
 
 minetest.override_item("default:sword_diamond", {
     original_description = "Diamond Sword",

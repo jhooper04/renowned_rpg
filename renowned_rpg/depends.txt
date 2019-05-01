@@ -1,6 +1,7 @@
 default
 unified_inventory
 cmi
+3d_armor
 beds
 farming
 mobs

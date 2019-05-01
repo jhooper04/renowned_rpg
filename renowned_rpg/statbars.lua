@@ -203,7 +203,7 @@ function renowned_rpg.update_all_huds(player)
         xp_state.upgrades_text)
 end
 
-function renowned_rpg.update_hunger_hud(player)
+function renowned_rpg.update_attk_def_hud(player)
     local attk_def_state = renowned_rpg.get_attk_def_bar_state(player)
 
     update_statbar(player, "attk_def", attk_def_state.text, attk_def_state.value)

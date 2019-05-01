@@ -10,8 +10,18 @@ local minetest_serialize = minetest.serialize
 local minetest_deserialize = minetest.deserialize
 local minetest_get_player_by_name = minetest.get_player_by_name
 local minetest_sound_play = minetest.sound_play
+local minetest_get_color_escape_sequence = minetest.get_color_escape_sequence
 
 
+local def_attk = renowned_rpg.settings.stat_defaults.attk
+local def_def = renowned_rpg.settings.stat_defaults.def
+local def_hlth = renowned_rpg.settings.stat_defaults.hlth
+local def_stam = renowned_rpg.settings.stat_defaults.stam
+local def_spd = renowned_rpg.settings.stat_defaults.spd
+local def_sprint = renowned_rpg.settings.stamina_defaults.sprint
+local def_thirst = renowned_rpg.settings.stamina_defaults.thirst
+local def_breath = renowned_rpg.settings.stamina_defaults.breath
+local def_hunger = renowned_rpg.settings.stamina_defaults.hunger
 
 
 -- **************************** Private functions **********************************
@@ -50,35 +60,35 @@ end
 
 
 local function data_get_hp(player)
-    return data_get_number(player, "custom_hp", 20)
+    return data_get_number(player, "custom_hp", def_hlth)
 end
 local function data_set_hp(player, value)
     data_set_number(player, "custom_hp", value)
 end
 
 local function data_get_breath(player)
-    return data_get_number(player, "custom_breath", 5)
+    return data_get_number(player, "custom_breath", def_breath)
 end
 local function data_set_breath(player, value)
     data_set_number(player, "custom_breath", value)
 end
 
 local function data_get_hunger(player)
-    return data_get_number(player, "custom_hunger", 5)
+    return data_get_number(player, "custom_hunger", def_hunger)
 end
 local function data_set_hunger(player, value)
     data_set_number(player, "custom_hunger", value)
 end
 
 local function data_get_sprint(player)
-    return data_get_number(player, "custom_sprint", 10)
+    return data_get_number(player, "custom_sprint", def_sprint)
 end
 local function data_set_sprint(player, value)
     data_set_number(player, "custom_sprint", value)
 end
 
 local function data_get_thirst(player)
-    return data_get_number(player, "custom_thirst", 10)
+    return data_get_number(player, "custom_thirst", def_thirst)
 end
 local function data_set_thirst(player, value)
     data_set_number(player, "custom_thirst", value)
@@ -127,7 +137,10 @@ local function data_set_pending_stats(player, value)
 end
 
 local function data_get_total_stats(player)
-    return data_get_table(player, "total_stats", {attk=0, def=0, hlth=20, stam=5, spd=0, breath=5, sprint=10, thirst=10, hunger=20})
+    return data_get_table(player, "total_stats", {
+        attk=def_attk, def=def_def, hlth=def_hlth, stam=def_stam, spd=def_spd,
+        breath=def_breath, sprint=def_sprint, thirst=def_thirst, hunger=def_hunger
+    })
 end
 local function data_set_total_stats(player, value)
     data_set_table(player, "total_stats", value)
@@ -442,6 +455,24 @@ function renowned_rpg.calc_damage(attk, def)
     return attk * attk / (attk + def)
 end
 
+function renowned_rpg.calc_tool_attk_bonus(player_stats, tool_stats)
+    local attk_mul = 1 + (tool_stats.attk*0.1)
+    local attk_bonus = (player_stats.attk*attk_mul) - player_stats.attk
+    if tool_stats.type ~= "other" and attk_bonus < tool_stats.attk then
+        attk_bonus = tool_stats.attk
+    end
+    return attk_bonus
+end
+
+function renowned_rpg.calc_armor_def_bonus(player_stats, level)
+    local def_mul = 1 + (level*0.1)
+    local def_bonus = (player_stats.def*def_mul) - player_stats.def
+    if def_bonus < level then
+        def_bonus = level
+    end
+    return def_bonus
+end
+
 
 ------------------------------- statbars --------------------------------------------------
 -------------------------------------------------------------------------------------------
@@ -488,15 +519,18 @@ end
 
 function renowned_rpg.get_attk_def_bar_state(player)
     local ret = {}
+    local player_name = player:get_player_name()
     local stats = renowned_rpg.get_total_stats(player)
-    
-    local def = stats.def
-    local bonus = 0
+    local weapon = player:get_wielded_item()
+    local weapon_stats = renowned_rpg.get_tool_stats(weapon)
+    local attk_bonus = renowned_rpg.calc_tool_attk_bonus(stats, weapon_stats)
+    local def_bonus = 0
 
-    ret.text = string.format("AT %d, DE %d", stats.attk, def)
-    if bonus > 0 then
-        ret.text = ret.text .. "+" .. tostring(bonus)
+    if armor.def[player_name] and armor.def[player_name].level ~= nil then
+        def_bonus = renowned_rpg.calc_armor_def_bonus(stats, armor.def[player_name].level)
     end
+
+    ret.text = string.format("AT %d+%d, DE %d+%d", stats.attk, attk_bonus, stats.def, def_bonus)
     ret.value = 1
     
     return ret
