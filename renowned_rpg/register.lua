@@ -170,7 +170,6 @@ function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
 	local full_punch_interval = caps.full_punch_interval or 1.4
 	local time_prorate = bound(tflp / full_punch_interval, 0, 1)
 	local damage = 0
-    local total_armor_rating = 0
     local mob_entity = mob:get_luaentity()
 
     local offender_attk = 0
@@ -184,19 +183,15 @@ function cmi.damage_calculator(mob, puncher, tflp, caps, direction, attacker)
     print("               tflp: "..tostring(tflp))
     print("full_punch_interval: "..tostring(full_punch_interval))
     print("       time_prorate: "..tostring(time_prorate))
-    print(dump(caps))
-  
-	-- for group, damage_rating in pairs(caps.damage_groups or {}) do
-	-- 	local armor_rating = a_groups[group] or 0
-    --     damage = damage + damage_rating * (armor_rating / 100)
-    --     total_armor_rating = total_armor_rating + armor_rating
-	-- end
-  
+
     if puncher:is_player() then
         local player_stats = renowned_rpg.get_total_stats(puncher)
+        local weapon = puncher:get_wielded_item()
+        local weapon_stats = renowned_rpg.get_tool_stats(weapon)
 
-        offender_attk = player_stats.attk
-        --damage = damage + player_stats.attk * (total_armor_rating / 100)
+        offender_attk = player_stats.attk + weapon_stats.attk
+
+        renowned_rpg.after_tool_use(weapon, puncher, nil)
     end
 
     damage = renowned_rpg.calc_damage(offender_attk, defender_def)

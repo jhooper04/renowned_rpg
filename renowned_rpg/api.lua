@@ -12,14 +12,18 @@ local minetest_get_player_by_name = minetest.get_player_by_name
 local minetest_sound_play = minetest.sound_play
 
 
+
+
 -- **************************** Private functions **********************************
 -- *********************************************************************************
 
 
--- _____________________ Data Storage/Retrieval ___________________________________
+
+------------------------------ Data Storage/Retrieval ------------------------------
+------------------------------------------------------------------------------------
 
 
--- ______________ data helpers _______________
+------------------------- data helpers -----------------------------
 local function data_get_string(player, prop, def)
     return player:get_attribute("renowned_rpg:" .. prop) or def
 end 
@@ -40,12 +44,10 @@ end
 local function data_set_table(player, prop, value)
     player:set_attribute("renowned_rpg:" .. prop, minetest_serialize(value))
 end
---__________________________________________
+--------------------------------------------------------------------------
 
 
---local function data_init_player(player)
---  self:set_xp(player, 0)
---end
+
 
 local function data_get_hp(player)
     return data_get_number(player, "custom_hp", 20)
@@ -195,7 +197,10 @@ local function data_set_stats_deaths(player, value)
 end
 
 
--- _____________________ Data Logic ___________________________________
+
+
+---------------------------- Data Logic ----------------------------------
+--------------------------------------------------------------------------
 
 
 local function logic_xp_to_level(total_xp)
@@ -271,12 +276,18 @@ local function logic_update_total_stats(player)
     data_set_breath(player, totals.breath)
 end
 
--- _____________________ Display Helpers ___________________________________
+
 
 
 
 -- **************************** Public API functions **********************************
 -- ************************************************************************************
+
+
+
+
+-------------------------- player properties ---------------------------
+------------------------------------------------------------------------
 
 function renowned_rpg.get_hp(player)
     return data_get_hp(player)
@@ -401,6 +412,12 @@ function renowned_rpg.apply_stats(player)
     renowned_rpg.update_all_huds(player)
 end
 
+
+
+
+---------------------------- player activity logging ------------------------------------
+-----------------------------------------------------------------------------------------
+
 function renowned_rpg.inc_nodes_dug(player, amount)
     if amount == nil then
         amount = 1
@@ -417,9 +434,17 @@ function renowned_rpg.inc_nodes_placed(player, amount)
     data_set_stats_nodes_placed(player, nodes_placed+amount)
 end
 
+
+--------------------------------- battle mechanics ----------------------------------------
+-------------------------------------------------------------------------------------------
+
 function renowned_rpg.calc_damage(attk, def)
     return attk * attk / (attk + def)
 end
+
+
+------------------------------- statbars --------------------------------------------------
+-------------------------------------------------------------------------------------------
 
 function renowned_rpg.get_xp_bar_state(player)
     local ret = {}
@@ -537,6 +562,9 @@ function renowned_rpg.get_thirst_bar_state(player)
     return ret
 end
 
+-------------------------- food ---------------------------------------
+-----------------------------------------------------------------------
+
 function renowned_rpg.register_food(itemstring, satiation, replace_with, poison, heal, sound)
     registered_food[itemstring] = {}
     registered_food[itemstring].satiation = satiation
@@ -554,3 +582,90 @@ function renowned_rpg.get_registered_food(itemstring)
     end
 end
 
+
+-------------------------------- tools ---------------------------------------
+------------------------------------------------------------------------------
+
+local desc_colors = {
+    title = minetest.get_color_escape_sequence("#1eff00"),
+    highlight = minetest.get_color_escape_sequence("#ffdf00"),
+    default = minetest.get_color_escape_sequence("#ffffff"),
+}
+
+function renowned_rpg.get_tool_type(description)
+    if string.find(description, "Pickaxe") then
+        return "pickaxe"
+    elseif string.find(description, "Axe") then
+        return "axe"
+    elseif string.find(description, "Shovel") then
+        return "shovel"
+    elseif string.find(description, "Hoe") then
+        return "hoe"
+    elseif string.find(description, "Sword") then
+        return "sword"
+    else
+        return "other"
+    end
+  end
+
+ function renowned_rpg.get_tool_stats(itemstack)
+    local itemmeta  = itemstack:get_meta()
+    local fields = itemmeta:to_table().fields
+
+    if fields.type == nil then
+        local itemdef   = itemstack:get_definition()
+
+        if itemdef.original_description ~= nil then
+            fields.type = renowned_rpg.get_tool_type(itemdef.original_description)
+        else
+            fields.type = renowned_rpg.get_tool_type(itemdef.description)
+        end
+        if fields.upgrade1 == nil then
+            fields.upgrade1 = "none"
+        end
+        if fields.upgrade2 == nil then
+            fields.upgrade2 = "none"
+        end
+        if fields.upgrade3 == nil then
+            fields.upgrade3 = "none"
+        end
+        if fields.uses == nil then
+            fields.uses = 0
+        end
+        if fields.level == nil then
+            level = 1
+        end
+
+        local attk = 0
+        if itemdef.tool_capabilities ~= nil then
+            for group, damage_rating in pairs(itemdef.tool_capabilities.damage_groups or {}) do
+                attk = attk + damage_rating
+            end
+        end
+        fields.attk = attk
+    end
+    return fields
+end
+
+function renowned_rpg.create_tool_description(description, tool_stats)
+    local upgrades = 0
+    if tool_stats.level == nil then
+        tool_stats.level = 1
+    end
+    if tool_stats.type == nil then
+        tool_stats.type = renowned_rpg.get_tool_type(description)
+    end
+    if tool_stats.upgrade1 and tool_stats.upgrade1 ~= "none" then
+        upgrades = upgrades + 1
+    end
+    if tool_stats.upgrade2 and tool_stats.upgrade2 ~= "none" then
+        upgrades = upgrades + 1
+    end
+    if tool_stats.upgrade3 and tool_stats.upgrade3 ~= "none" then
+        upgrades = upgrades + 1
+    end
+    local desc = desc_colors.title .. description .. "\n" ..
+        desc_colors.highlight .. "Level " .. (tool_stats.level) .. " " .. tool_stats.type .. "\n" ..
+        desc_colors.default .. "Upgrades: " .. tostring(upgrades) .. "/3"
+    return desc
+end
