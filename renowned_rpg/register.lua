@@ -147,14 +147,14 @@ minetest.register_on_punchplayer(function(player, hitter, time_from_last_punch, 
     local player_name = player:get_player_name()
 
     local stats = renowned_rpg.get_total_stats(player)
-    local offender_attk = mob_entity.renowned_attk
+    local offender_attk = mob_entity.renowned_attk or mob_entity.damage
 
     local defender_def = stats.def
     if armor.def[player_name] and armor.def[player_name].level ~= nil then
         defender_def = defender_def + renowned_rpg.calc_armor_def_bonus(stats, armor.def[player_name].level)
     end
 
-    local damage = renowned_rpg.calc_damage(offender_attk, defender_def) -- offender_attk * offender_attk / (offender_attk + defender_def) 
+    local damage = renowned_rpg.calc_damage(offender_attk, defender_def)
 
     print("--------player hit---------")
     print("offender attk: "..tostring(offender_attk))
