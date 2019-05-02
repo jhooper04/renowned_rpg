@@ -26,6 +26,25 @@ minetest.register_craft({
 	}
 })
 
+
+table.insert(armor.elements, "healing_item")
+
+armor:register_armor("renowned_rpg:makeshift_bandage", {
+	description = "Makeshift Bandage",
+	inventory_image = "renowned_rpg_makeshift_bandage.png",
+	groups = {armor_healing_item=1, armor_use=10},
+})
+
+minetest.register_craft({
+	output = "renowned_rpg:makeshift_bandage",
+	recipe = {
+		{"default:marram_grass_1"},
+		{"group:sapling"},
+	}
+})
+
+
+
 minetest.register_tool("renowned_rpg:leather_vessel", {
 	description = "Leather Vessel",
     inventory_image = "renowned_rpg_leather_vessel.png",

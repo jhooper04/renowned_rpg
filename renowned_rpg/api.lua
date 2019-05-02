@@ -667,7 +667,7 @@ function renowned_rpg.get_tool_type(description)
             fields.uses = 0
         end
         if fields.level == nil then
-            level = 1
+            fields.level = 1
         end
 
         local attk = 0
