@@ -32,6 +32,7 @@ minetest.register_on_joinplayer(function(player)
     local stats = renowned_rpg.get_total_stats(player)
 
     renowned_rpg.players[name] = {
+        healing_type = "none",
         damaged = false,
         suffocate = true,
         sprinting = false,
@@ -62,6 +63,7 @@ minetest.register_on_respawnplayer(function(player)
     renowned_rpg.set_sprint(player, stats.sprint)
     renowned_rpg.set_thirst(player, stats.thirst)
 
+    renowned_rpg.players[name].healing_type = "none"
     renowned_rpg.players[name].damaged = false
     renowned_rpg.players[name].suffocate = true
     renowned_rpg.players[name].sprinting = false
@@ -227,6 +229,18 @@ end)
 armor:register_on_update(function(player)
     print("----------on update--------------")
     renowned_rpg.update_attk_def_hud(player)
+
+    local player_name, armor_inv = armor:get_valid_player(player, "[healing bandage]")
+
+    if armor_inv ~= nil then
+        local list = armor_inv:get_list("armor")
+
+        for i, stack in ipairs(list) do
+            if stack:get_name() == "renowned_rpg:makeshift_bandage" then
+                renowned_rpg.players[player_name].healing_type = "armor"
+            end
+        end
+    end
 end)
 
 armor:register_on_damage(function(player)
@@ -334,14 +348,24 @@ local sprint_update_rate = renowned_rpg.settings.sprint.update_rate
 local sprint_speed = renowned_rpg.settings.sprint.speed_multiplier
 local sprint_jump = renowned_rpg.settings.sprint.jump_multiplier
 
+local healing_timer = 0
+local healing_update_rate = renowned_rpg.settings.healing.update_rate
+
 minetest.register_globalstep(function(dtime)
 
     attk_def_timer = attk_def_timer + dtime
+    sprint_timer = sprint_timer + dtime
     breath_timer = breath_timer + dtime
     hunger_timer = hunger_timer + dtime
     thirst_timer = thirst_timer + dtime
-    sprint_timer = sprint_timer + dtime
-    
+    healing_timer = healing_timer + dtime
+
+    local update_attk_def = attk_def_timer > attk_def_update_rate
+    local update_sprint = sprint_timer > sprint_update_rate
+    local update_breath = breath_timer > breath_update_rate
+    local update_hunger = hunger_timer > hunger_update_rate
+    local update_thirst = thirst_timer > thirst_update_rate
+    local update_healing = healing_timer > healing_update_rate
 
     local players = minetest_get_connected_players()
     for n, player in ipairs(players) do
@@ -357,7 +381,6 @@ minetest.register_globalstep(function(dtime)
         end
 
         if keys.aux1 then 
-
             if renowned_rpg.get_sprint(player) > 0 then
                 if renowned_rpg.players[player_name].sprinting == false then
                     local stats = renowned_rpg.get_total_stats(player)
@@ -380,12 +403,11 @@ minetest.register_globalstep(function(dtime)
             renowned_rpg.players[player_name].sprinting = false
         end
 
-        if attk_def_timer > attk_def_update_rate then
+        if update_attk_def then
             renowned_rpg.update_attk_def_hud(player)
-            attk_def_timer = 0
         end
 
-        if sprint_timer > sprint_update_rate then
+        if update_sprint then
             if renowned_rpg.players[player_name].sprinting then
                 local sprint = math_max(renowned_rpg.get_sprint(player)-sprint_timer, 0)
                 renowned_rpg.set_sprint(player, sprint)
@@ -395,10 +417,9 @@ minetest.register_globalstep(function(dtime)
                 renowned_rpg.set_sprint(player, sprint)
             end
             renowned_rpg.update_sprint_hud(player)
-            sprint_timer = 0
         end
 
-        if breath_timer > breath_update_rate then
+        if update_breath then
             local breath = player:get_breath()
             local suffocating = false
 
@@ -426,10 +447,9 @@ minetest.register_globalstep(function(dtime)
                 end
                 renowned_rpg.update_breath_hud(player)
             end
-            breath_timer = 0
         end
 
-        if hunger_timer > hunger_update_rate then
+        if update_hunger then
             local hunger = renowned_rpg.get_hunger(player)
             local exaustion = renowned_rpg.players[player_name].exaustion + math_floor(dtime*100)
 
@@ -448,11 +468,9 @@ minetest.register_globalstep(function(dtime)
             if hunger <= 0 then
                 player:set_hp(player:get_hp()-5)
             end
-
-            hunger_timer = 0
         end
 
-        if thirst_timer > thirst_update_rate then
+        if update_thirst then
             local thirst = renowned_rpg.get_thirst(player)
             local hydration = renowned_rpg.players[player_name].hydration + math_floor(dtime*100)
             local drinking = false
@@ -486,10 +504,33 @@ minetest.register_globalstep(function(dtime)
             if thirst <= 0 then 
                 player:set_hp(player:get_hp()-5)
             end
+        end
 
-            thirst_timer = 0
+        if update_healing then
+            local healing_type = renowned_rpg.players[player_name].healing_type
+
+            if healing_type ~= "none" then
+                if healing_type == "armor" then
+                    local pname, armor_inv = armor:get_valid_player(player, "[healing bandage]")
+                    local list = armor_inv:get_list("armor")
+
+                    for i, stack in ipairs(list) do
+                        if stack:get_name() == "renowned_rpg:makeshift_bandage" then
+                            armor:damage(player, i, stack, math_floor(65536/20))
+                            player:set_hp(player:get_hp()+1)
+                        end
+                    end
+                end
+            end
         end
     end
+
+    if update_attk_def then attk_def_timer = 0 end
+    if update_sprint then sprint_timer = 0 end
+    if update_breath then breath_timer = 0 end
+    if update_hunger then hunger_timer = 0 end
+    if update_thirst then thirst_timer = 0 end
+    if update_healing then healing_timer = 0 end
 end)
 
 minetest.register_on_placenode(function(pos, newnode, player, oldnode, itemstack, pointed_thing)

@@ -34,6 +34,10 @@ renowned_rpg.settings.attk_def_stat = {
   update_rate = 4,
 }
 
+renowned_rpg.settings.healing = {
+  update_rate = 10
+}
+
 renowned_rpg.settings.class_bonuses = {
   soldier={
     attack=2,
