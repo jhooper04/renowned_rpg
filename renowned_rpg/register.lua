@@ -559,6 +559,11 @@ minetest.register_on_placenode(function(pos, newnode, player, oldnode, itemstack
     print(dump(biome))
 end)
 minetest.register_on_dignode(function(pos, oldnode, player)
+
+    if player == nil then
+        return
+    end
+
     local player_name = player:get_player_name()
     
     local exaustion = renowned_rpg.players[player_name].exaustion

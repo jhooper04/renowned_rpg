@@ -31,7 +31,7 @@ table.insert(armor.elements, "healing_item")
 
 armor:register_armor("renowned_rpg:makeshift_bandage", {
 	description = "Makeshift Bandage",
-	inventory_image = "renowned_rpg_makeshift_bandage.png",
+	inventory_image = "renowned_rpg_inv_makeshift_bandage.png",
 	groups = {armor_healing_item=1, armor_use=10},
 })
 
